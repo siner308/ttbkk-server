@@ -1,44 +1,13 @@
 import json
 import os
-from typing import cast
+import uuid
 
 from src.apps.place.models import Place
-from src.crawlers.franchise_type import FranchiseType
 
 
-def run(file_name: str = "naver_bookmark.json", ttbkk_category_name: str = "떡볶이"):
-    json_file = os.path.join(os.path.dirname(__file__), file_name)
-
-    data = json.load(open(json_file, "r", encoding="utf-8"))
-
-    filtered_forders = [forder for forder in cast(list[dict], data.get('my').get('folderSync').get("folders")) if
-                        forder.get('name') == ttbkk_category_name]
-
-    if len(filtered_forders) == 0:
-        raise Exception(f"{ttbkk_category_name} 그룹이 존재하지 않습니다.")
-
-    if len(filtered_forders) > 1:
-        raise Exception(f"{ttbkk_category_name} 그룹이 2개 이상 존재합니다.")
-
-    ttbkk_folder = filtered_forders[0]
-
-    # filter by category_name
-    category_filtered_bookmarks = list(map(
-        lambda bookmark: bookmark.get("bookmark"),
-        filter(
-            lambda bookmark: len(list(filter(
-                lambda folder_mapping: folder_mapping.get("folderId") == ttbkk_folder.get("folderId"),
-                bookmark.get("folderMappings"),
-            ))) > 0,
-            cast(list[dict], data.get('my').get('bookmarkSync').get("bookmarks")),
-        ),
-    ))
-
+def run(data: dict = {}, ttbkk_category_name: str = "떡볶이"):
     # filter by FranchiseType
-    franchise_type_filtered_bookmarks = list(filter(
-        lambda bookmark: not len(list(filter(lambda type: type.value in bookmark.get("name"), FranchiseType))),
-        category_filtered_bookmarks,
-    ))
+    franchise_type_filtered_bookmarks = data.get('bookmarkList')
 
     places = []
     for bookmark in franchise_type_filtered_bookmarks:
@@ -67,6 +36,7 @@ def run(file_name: str = "naver_bookmark.json", ttbkk_category_name: str = "떡�
 
         print(f"{name} - {address}")
         new_place = Place(
+            id=uuid.uuid4().__str__().replace('-', ''),
             name=name,
             address=address,
             latitude=py,
@@ -77,3 +47,23 @@ def run(file_name: str = "naver_bookmark.json", ttbkk_category_name: str = "떡�
     result = Place.objects.bulk_create(objs=places)
 
     print(f"{len(result)}개의 장소가 추가되었습니다.")
+
+
+def main():
+    # category_name = '떡볶이'
+    # BOOKMARK_CATEGORY_LIST_URL = 'https://pages.map.naver.com/save-pages/api/maps-bookmark/v3/folders?start=0&limit=20&sort=lastUseTime&folderType=all'
+    # bookmark_category_data = requests.get(BOOKMARK_CATEGORY_LIST_URL).json()
+    # ttbkk_folder = list(filter(lambda folder: folder.get('name') == category_name, bookmark_category_data.get('folders')))[0]
+
+    # shared_id = '1eeeb00929fd4a33a383421fd363eb8f'
+    # BOOKMARK_LIST_URL = f'https://pages.map.naver.com/save-pages/api/maps-bookmark/v3/shares/{shared_id}/bookmarks?start=0&limit=5000&sort=lastUseTime '
+    # bookmark_data = requests.get(BOOKMARK_LIST_URL).json()
+
+    with open(os.path.join(os.path.dirname(__file__), 'naver_bookmark.json'), 'r') as f:
+        bookmark_data = json.load(f)
+
+    run(data=bookmark_data, ttbkk_category_name="떡볶이")
+
+
+if __name__ == "__main__":
+    main()

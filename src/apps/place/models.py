@@ -9,7 +9,7 @@ from src.apps.user.models import User
 
 
 class Place(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+    id = models.CharField(primary_key=True, max_length=32, default=uuid.uuid4)
 
     latitude = models.DecimalField(max_digits=15, decimal_places=13)
     longitude = models.DecimalField(max_digits=15, decimal_places=12)
@@ -19,7 +19,7 @@ class Place(models.Model):
     telephone = models.CharField(max_length=100, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
 
-    hashtags = models.ManyToManyField(Hashtag, blank=True)
+    hashtags = models.ManyToManyField(Hashtag, blank=True, db_table='place_hashtags')
 
     brand = models.ForeignKey(Brand, null=True, on_delete=models.SET_NULL, db_column='brand_id')
 
@@ -41,3 +41,6 @@ class Place(models.Model):
     @property
     def unique_key(self):
         return '%s-%s-%s' % (self.brand_id, self.address.split()[0], self.name)
+
+    class Meta:
+        db_table = 'place'

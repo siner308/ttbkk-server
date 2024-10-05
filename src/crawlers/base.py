@@ -1,3 +1,5 @@
+import uuid
+
 from src.apps.brand.models import Brand
 from src.apps.place.models import Place
 from src.utils.chromedriver import setup_chrome
@@ -34,7 +36,8 @@ class BaseCrawler:
         while not self.driver:
             try:
                 self.driver = setup_chrome()
-            except:
+            except Exception as e:
+                print(e)
                 continue
         self.driver.switch_to.new_window('window')
         while True:
@@ -59,6 +62,10 @@ class BaseCrawler:
                         exist_place.save()
             exist_place_names = [place.name for place in exist_places]
             new_places = [place for place in places if place.name not in exist_place_names]
+            def set_id(place):
+                place.id = str(uuid.uuid4()).replace('-', '')
+                return place
+            new_places = list(map(lambda place: set_id(place), new_places))
             Place.objects.bulk_create(new_places)
             print('new %s places are created' % str(len(new_places)))
         print('%s finished' % self.crawler_name)

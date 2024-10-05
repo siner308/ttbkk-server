@@ -60,7 +60,12 @@ class BaeDduckCrawler(BaseCrawler):
             if not place_name.endswith('점'):
                 place_name += '점'
 
-            name = '%s %s' % (self.brand_name, place_name)
+            region_name = str(element.find_element(by=By.XPATH, value='./td[2]').text)
+
+            if region_name in place_name:
+                name = '%s %s' % (self.brand_name, place_name)
+            else:
+                name = '%s %s %s' % (self.brand_name, region_name, place_name)
             print(name)
             address = element.find_element(by=By.XPATH, value='./td[3]').text
             latitude, longitude = get_latlng(address, name)

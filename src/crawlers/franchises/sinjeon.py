@@ -38,9 +38,14 @@ class SinjeonCrawler(BaseCrawler):
             pass
         places = []
         for element in elements:
-            name = '%s %s' % (self.brand_name, element.find_element(by=By.XPATH, value='./td[2]/a').text)
+            region_name = element.find_element(by=By.XPATH, value='./td[1]/a').text
+            place_name = element.find_element(by=By.XPATH, value='./td[2]/a').text
             telephone = element.find_element(by=By.XPATH, value='./td[3]').text
             address = element.find_element(by=By.XPATH, value='./td[4]').text
+            if region_name in place_name:
+                name = '%s %s' % (self.brand_name, place_name)
+            else:
+                name = '%s %s %s' % (self.brand_name, region_name, place_name)
             latitude, longitude = get_latlng(address, name)
             if not latitude or not longitude:
                 print('[failed] %s\n%s\n%s' % (name, address, telephone))

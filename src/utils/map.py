@@ -45,6 +45,12 @@ def get_latlng(road_address, place_name):
     except:
         pass
     try:
+        lat, lng = get_lanlng_with_google(place_name)
+        if lat and lng:
+            return lat, lng
+    except:
+        pass
+    try:
         lat, lng = get_lanlng_with_google(address)
         if lat and lng:
             return lat, lng
@@ -105,7 +111,8 @@ def get_latlng_with_kakao_by_road_address(road_address, place_name):
 
 
 def get_latlng_with_kakao(road_address, place_name):
-    lat, lng = get_latlng_with_kakao_by_name('%s %s' % (place_name, road_address.split()[0]))
+    # lat, lng = get_latlng_with_kakao_by_name('%s %s' % (place_name, road_address.split()[0])) TODO 주소가 가맹점 이름과 일치하지 않는 경우가 있어서 우회함
+    lat, lng = get_latlng_with_kakao_by_name(place_name)
     if lat and lng:
         return lat, lng
     return get_latlng_with_kakao_by_road_address(road_address, place_name)

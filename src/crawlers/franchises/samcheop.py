@@ -39,15 +39,39 @@ class SamCheopCrawler(BaseCrawler):
 
         places = []
         for element in elements:
+            region_name = str(element.find_element(by=By.XPATH, value='./td[1]/a').text)
             place_name = str(element.find_element(by=By.XPATH, value='./td[2]/div/a/div[2]').text)
-            print(place_name)
-            name = '%s %s' % (self.brand_name, place_name)
             telephone = element.find_element(by=By.XPATH, value='./td[4]/div[2]').text
             address = element.find_element(by=By.XPATH, value='./td[3]/div[2]').text
+            print(place_name)
+
+            if region_name == '프리미엄[홀]':
+                address_region = address.split(' ')[0]
+                if len(address_region) < 2:
+                    region_name = ''
+                elif len(address_region) >= 5:
+                    # ex) 서울특별시, 부산광역시, 대구광역시, 인천광역시, 광주광역시, 대전광역시, 울산광역시, 세종특별자치시
+                    region_name = address_region[:2]
+                elif len(address_region) == 4:
+                    # ex) 경상북도, 경상남도, 전라북도, 전라남도
+                    region_name = address_region[:2]
+                elif len(address_region) == 3:
+                    # ex) 강원도, 경기도
+                    region_name = address_region[:2]
+                elif address_region == '해외':
+                    region_name = ''
+                else:
+                    region_name = address_region[:2]
+
+            if region_name in place_name:
+                name = '%s %s' % (self.brand_name, place_name)
+            else:
+                name = '%s %s %s' % (self.brand_name, region_name, place_name)
             latitude, longitude = get_latlng(address, name)
             if not latitude or not longitude:
                 print('[failed] %s\n%s\n%s' % (name, address, telephone))
                 continue
+
             places.append(Place(name=name, address=address, latitude=latitude, longitude=longitude,
                                 telephone=telephone, brand=self.get_brand()))
             time.sleep(0.5)
